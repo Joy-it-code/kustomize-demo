@@ -43,12 +43,22 @@ git --version
 
 
 ## 2: Create Project Structure
-
+```
 kustomize-demo/
 │
-├── kustomization.yaml       
-└── mypod.yaml 
-
+├── base/
+│   ├── kustomization.yaml 
+│   └── mypod.yaml
+│
+├── overlays/
+│   ├── dev/
+│   │   ├── kustomization.yaml
+│   │   └── patch.yaml
+│   │
+│   └── prod/
+│       ├── kustomization.yaml
+│       └── patch.yaml
+```
 
 ```
 mkdir kustomize-demo
@@ -106,7 +116,7 @@ spec:
 
 ## 4: Apply Pod to Kubernetes:
 
-- Apply your Pod to the mini-cluster:
+- Apply Pod to the mini-cluster:
 ```
 kubectl apply -f mypod.yaml
 ```
@@ -147,21 +157,24 @@ resources:
 ```
 kustomize build .
 ```
+
+## Verify the Pod:
+```
+kubectl get pods
+```
+
 ![](./img/4a.kustomz.build1.png)
+![](./img/4c.get.pods2.png)
 
 
 **Explanation:** This kustomization.yaml references mypod.yaml and generates the combined configuration.
 
 
-###  Experiment with Kustomize features, such as adding a label to your Pod using Kustomize.
+###  Experiment with Kustomize features, 
 
-- Modify kustomization.yaml to include a commonLabels field:
+- Add label to pod, modify kustomization.yaml to include a commonLabels field:
 
 ```
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- mypod.yaml
 commonLabels:
   app: nginx
 ```
@@ -171,19 +184,54 @@ commonLabels:
 ```
 kustomize build .
 ```
+
+### Apply the updated configuration:
+```
+kubectl apply -k .
+```
+
+### Verify the label
+```
+kubectl get pods --show-labels
+```
+
 ![](./img/4b.add.labels.png)
 
 **Note:** Kustomize allows us to customize configurations (e.g., adding labels, changing images) without modifying the base YAML files, which is useful for managing multiple environments.
 
 
+- ## Add a patch to change the nginx image tag, demonstrating Kustomize’s customization capabilities.
 
-## Stop and Delete Minikube
+- #### Update kustomization.yaml
 ```
-minikube stop 
-minikube delete
+patches:
+- path: patch.yaml
 ```
-![](./img/5a.minik.stop.png)
-![](./img/5b.mini.delete.png)
+
+
+#### Create patch.yaml:
+```
+touch patch.yaml
+```
+```
+cat > patch.yaml <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: nginx:1.19
+```
+
+### Build, Apply and Verify:
+```
+kustomize build .
+kubectl apply -k .
+kubectl describe pod mypod | grep Image
+```
+![](./img/5c.build.verify.png)
 
 
 ### Version Control with GitHub:
@@ -203,6 +251,196 @@ git branch -m master main
 git remote add origin https://github.com/yourusername/your-repository.git
 git push -u origin main
 ```
+
+
+## Create Overlays
+
+- Manage environment-specific configurations (dev, prod).
+
+- Create structure:
+```
+mkdir -p base overlays/dev overlays/prod
+mv mypod.yaml kustomization.yaml patch.yaml base/
+```
+
+
+## Update base/kustomization.yaml
+```
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- mypod.yaml
+```
+
+**Note: move patch.yaml to overlay for now**
+
+### Create overlays/dev/kustomization.yaml
+```
+cat > overlays/dev/patch.yaml <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: nginx:1.19
+EOF
+```
+
+**Check**
+```
+cat overlays/dev/patch.yaml
+```
+
+## Create overlays/dev/kustomization.yaml
+```
+cat > overlays/dev/kustomization.yaml <<EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+- ../../base
+patches:
+- path: patch.yaml
+labels:
+- includeSelectors: true
+  pairs:
+    env: dev
+EOF
+```
+
+**Verify**
+```
+cat overlays/dev/kustomization.yaml
+```
+
+
+## Check overlays/prod/patch.yaml
+```
+cat > overlays/prod/patch.yaml <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: nginx:1.21
+EOF
+```
+
+**Verify**
+```
+cat overlays/prod/patch.yaml
+```
+
+
+### Create overlays/prod/kustomization.yaml
+```
+cat > overlays/prod/kustomization.yaml <<EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+- ../../base
+patches:
+- path: patch.yaml
+labels:
+- includeSelectors: true
+  pairs:
+    env: prod
+EOF
+```
+
+### Test the Overlays
+
+- Build **dev and prod**  Configuration:
+```
+cd overlays/dev
+kustomize build .
+cd ../prod/
+kustomize build .
+```
+![](./img/6a.kust.build.prod.png)
+
+
+
+#### Apply dev to Minikube: Ensure Minikube is running:
+```
+cd kustomize-demo
+kubectl apply -k overlays/dev
+```
+
+**Verify**
+```
+kubectl get pods --show-labels
+```
+![](./img/6b.overlays.dev.png)
+
+
+### Apply prod and Verify
+```
+kubectl apply -k overlays/prod
+kubectl get pods --show-labels
+```
+![](./img/6c.overlay.prod.png)
+
+
+
+### Verify Both Overlays
+- Switch Back to dev
+```
+kubectl apply -k overlays/dev
+kubectl get pods --show-labels
+```
+
+### Check Pod Details
+```
+kubectl describe pod mypod
+```
+
+
+### Check current log:
+```
+kubectl logs mypod
+```
+
+### Check realtime log:
+```
+kubectl logs mypod -f
+kubectl logs mypod -f --since=10m --tail=500
+```
+
+
+### Monitor Pod:
+```
+kubectl get pods --watch
+
+```
+![](./img/7a.check.logs.png)
+![](./img/8a.pod.describ.png)
+![](./img/8b.pod.watch.png)
+
+
+
+### Commit Changes
+### Stage and Commit:
+
+```
+git add .
+git commit -m "Tested log files"
+git push 
+```
+
+
+### Stop and Delete Minikube:
+
+```
+minikube stop 
+minikube delete
+```
+![](./img/5a.minik.stop.png)
+![](./img/5b.mini.delete.png)
+
 
 
 
