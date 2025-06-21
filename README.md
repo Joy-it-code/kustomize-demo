@@ -43,6 +43,13 @@ git --version
 
 
 ## 2: Create Project Structure
+
+kustomize-demo/
+│
+├── kustomization.yaml       
+└── mypod.yaml 
+
+
 ```
 mkdir kustomize-demo
 cd kustomize-demo
