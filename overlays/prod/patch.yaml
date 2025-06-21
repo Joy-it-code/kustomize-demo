@@ -1,8 +1,17 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: mypod
+  name: mydeployment
 spec:
-  containers:
-  - name: mycontainer
-    image: nginx:1.21
+  template:
+    spec:
+      containers:
+      - name: mycontainer
+        image: nginx:1.21
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "512Mi"
+          requests:
+            cpu: "0.2"
+            memory: "256Mi"

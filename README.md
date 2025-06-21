@@ -48,6 +48,7 @@ kustomize-demo/
 │
 ├── base/
 │   ├── kustomization.yaml 
+|   ├── mydeployment.yaml
 │   └── mypod.yaml
 │
 ├── overlays/
@@ -430,6 +431,114 @@ git add .
 git commit -m "Tested log files"
 git push 
 ```
+
+## Explore Deployments: Add a mydeployment.yaml to base
+```
+cat > base/mydeployment.yaml <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: mycontainer
+        image: nginx
+EOF
+```
+
+**Verify**
+```
+cat base/mydeployment.yaml
+```
+
+
+## Update base/kustomization.yaml:
+```
+cat > base/kustomization.yaml <<EOF
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- mypod.yaml
+- mydeployment.yaml
+EOF
+```
+
+### Verify
+```
+cat base/kustomization.yaml
+```
+
+
+### Update under spec.template.spec.containers:
+```
+containers:
+- name: mycontainer
+  image: nginx:1.21
+```
+
+### overlays/prod/patch.yaml
+
+**Add**
+```
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "512Mi"
+          requests:
+            cpu: "0.2"
+            memory: "256Mi"
+EOF
+```
+
+
+### Run
+```
+kubectl apply -k overlays/prod
+kubectl get pods --show-labels
+kubectl logs mypod -f --since=35m --tail=500
+kubectl describe pod mydeployment-76f675b7b6-88lnl
+```
+![](./img/9a.apply.deploymt.png)
+
+
+### Confirm Consistency
+#### Check mydeployment Image:
+
+- Ensure the Deployment uses the intended version (1.21 to match mypod)
+```
+kubectl edit -f base/mydeployment.yaml
+```
+![](./img/9b.edit.deploymt.png)
+
+
+**Reapply:**
+```
+kubectl apply -k overlays/prod
+```
+
+### Monitor Logs:
+Continue monitoring mypod and mydeployment:
+```
+kubectl logs mypod -f --since=1h --tail=500
+kubectl logs mydeployment-76f675b7b6-88lnl -f --since=35m --tail=500
+```
+
+
+**Run**
+```
+kubectl delete pod mypod
+kubectl get pods --show-labels
+```
+![](./img/9c.show.label.deply.png)
 
 
 ### Stop and Delete Minikube:
