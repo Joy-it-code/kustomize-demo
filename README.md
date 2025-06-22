@@ -553,6 +553,10 @@ minikube delete
 
 
 
+## Conclusion
+This project demonstrates a practical use of Kubernetes' Kustomize for managing environment-specific configurations in a scalable and maintainable way. By leveraging Minikube, Docker, and Kubernetes manifests, I successfully deployed and customized an Nginx pod across different environments. This setup ensures consistency, flexibility, and ease of updates, making it suitable for real-world production and development workflows.
+
+
 ### References
 
 - Kubernetes Official Docs
