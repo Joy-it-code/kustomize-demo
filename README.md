@@ -6,20 +6,20 @@
 
 ## Technologies & Tools Used
 
-- **Kubernetes**
-- **Kustomize**
-- **Docker Desktop**
-- **Minikube**
-- **kubectl (Kubernetes CLI)**
-- **Visual Studio Code (VS Code)**
-- **YAML & Kubernetes Extensions for VS Code**
-- **Github account (Optional)**
+- Kubernetes
+- Kustomize
+- Docker Desktop
+- Minikube
+- kubectl **(Kubernetes CLI)**
+- Visual Studio Code **(VS Code)**
+- YAML & Kubernetes Extensions for VS Code
+- Github account (Optional)
 
 ----
 #  Setup Instructions
 
 ## 1. **Install Required Tools**
-```
+```bash
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)
 - [Minikube](https://minikube.sigs.k8s.io/docs/start/)
@@ -28,7 +28,7 @@
 ```
 
 ## Verify Installations
-```
+```bash
 code --version
 docker --version
 kubectl version --client
@@ -43,7 +43,7 @@ git --version
 
 
 ## 2: Create Project Structure
-```
+```bash
 kustomize-demo/
 │
 ├── base/
@@ -61,24 +61,24 @@ kustomize-demo/
 │       └── patch.yaml
 ```
 
-```
+```bash
 mkdir kustomize-demo
 cd kustomize-demo
 ```
 
 
 ### Start Minikube with Docker Driver:
-```
+```bash
 minikube start --driver=docker
 ```
 
 ### Check Tiny Kubernetes Cluster:
-```
+```bash
 kubectl get nodes
 ```
 
 ### Check Minikube Status:
-```
+```bash
 minikube status
 ```
 ![](./img/2a.minikube.start.png)
@@ -96,11 +96,11 @@ minikube status
 
 
 ## Create a Kubenertes file named mypod.yaml:
-```
+```bash
 touch mypod.yaml
 ```
 - **Paste**
-```
+```bash
 apiVersion: v1
 kind: Pod
 metadata:
@@ -118,12 +118,12 @@ spec:
 ## 4: Apply Pod to Kubernetes:
 
 - Apply Pod to the mini-cluster:
-```
+```bash
 kubectl apply -f mypod.yaml
 ```
 
 ### Check if the Pod is running:
-```
+```bash
 kubectl get pods
 ```
 ![](img/3a.kub.apply.f.png)
@@ -142,12 +142,12 @@ kubectl get pods
 #### Install Kustomize and set up a basic Kubernetes cluster using minikube
 
 - Create a kustomization.yaml file in your project directory:
-```
+```bash
 touch kustomization.yaml
 ```
 
 **Paste**
-```
+```bash
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
@@ -155,12 +155,12 @@ resources:
 ```
 
 ## Run Kustomize to preview the output:
-```
+```bash
 kustomize build .
 ```
 
 ## Verify the Pod:
-```
+```bash
 kubectl get pods
 ```
 
@@ -182,17 +182,17 @@ commonLabels:
 
 ### Run
 
-```
+```bash
 kustomize build .
 ```
 
 ### Apply the updated configuration:
-```
+```bash
 kubectl apply -k .
 ```
 
 ### Verify the label
-```
+```bash
 kubectl get pods --show-labels
 ```
 
@@ -204,17 +204,17 @@ kubectl get pods --show-labels
 - ## Add a patch to change the nginx image tag, demonstrating Kustomize’s customization capabilities.
 
 - #### Update kustomization.yaml
-```
+```bash
 patches:
 - path: patch.yaml
 ```
 
 
 #### Create patch.yaml:
-```
+```bash
 touch patch.yaml
 ```
-```
+```bash
 cat > patch.yaml <<EOF
 apiVersion: v1
 kind: Pod
@@ -227,7 +227,7 @@ spec:
 ```
 
 ### Build, Apply and Verify:
-```
+```bash
 kustomize build .
 kubectl apply -k .
 kubectl describe pod mypod | grep Image
@@ -240,14 +240,14 @@ kubectl describe pod mypod | grep Image
 - Create a repositoy on github
 
 #### Initialize the Git repository:
-```
+```bash
 git init
 git add .
 git commit -m "Initial Kustomize project"
 ```
 
 #### Push to a new GitHub repository
-```
+```bash
 git branch -m master main
 git remote add origin https://github.com/yourusername/your-repository.git
 git push -u origin main
@@ -259,14 +259,14 @@ git push -u origin main
 - Manage environment-specific configurations (dev, prod).
 
 - Create structure:
-```
+```bash
 mkdir -p base overlays/dev overlays/prod
 mv mypod.yaml kustomization.yaml patch.yaml base/
 ```
 
 
 ## Update base/kustomization.yaml
-```
+```bash
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
@@ -276,7 +276,7 @@ resources:
 **Note: move patch.yaml to overlay for now**
 
 ### Create overlays/dev/kustomization.yaml
-```
+```bash
 cat > overlays/dev/patch.yaml <<EOF
 apiVersion: v1
 kind: Pod
@@ -290,12 +290,12 @@ EOF
 ```
 
 **Check**
-```
+```bash
 cat overlays/dev/patch.yaml
 ```
 
 ## Create overlays/dev/kustomization.yaml
-```
+```bash
 cat > overlays/dev/kustomization.yaml <<EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -311,13 +311,13 @@ EOF
 ```
 
 **Verify**
-```
+```bash
 cat overlays/dev/kustomization.yaml
 ```
 
 
 ## Check overlays/prod/patch.yaml
-```
+```bash
 cat > overlays/prod/patch.yaml <<EOF
 apiVersion: v1
 kind: Pod
@@ -331,13 +331,13 @@ EOF
 ```
 
 **Verify**
-```
+```bash
 cat overlays/prod/patch.yaml
 ```
 
 
 ### Create overlays/prod/kustomization.yaml
-```
+```bash
 cat > overlays/prod/kustomization.yaml <<EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -355,7 +355,7 @@ EOF
 ### Test the Overlays
 
 - Build **dev and prod**  Configuration:
-```
+```bash
 cd overlays/dev
 kustomize build .
 cd ../prod/
@@ -366,20 +366,20 @@ kustomize build .
 
 
 #### Apply dev to Minikube: Ensure Minikube is running:
-```
+```bash
 cd kustomize-demo
 kubectl apply -k overlays/dev
 ```
 
 **Verify**
-```
+```bash
 kubectl get pods --show-labels
 ```
 ![](./img/6b.overlays.dev.png)
 
 
 ### Apply prod and Verify
-```
+```bash
 kubectl apply -k overlays/prod
 kubectl get pods --show-labels
 ```
@@ -389,31 +389,31 @@ kubectl get pods --show-labels
 
 ### Verify Both Overlays
 - Switch Back to dev
-```
+```bash
 kubectl apply -k overlays/dev
 kubectl get pods --show-labels
 ```
 
 ### Check Pod Details
-```
+```bash
 kubectl describe pod mypod
 ```
 
 
 ### Check current log:
-```
+```bash
 kubectl logs mypod
 ```
 
 ### Check realtime log:
-```
+```bash
 kubectl logs mypod -f
 kubectl logs mypod -f --since=10m --tail=500
 ```
 
 
 ### Monitor Pod:
-```
+```bash
 kubectl get pods --watch
 
 ```
@@ -424,16 +424,18 @@ kubectl get pods --watch
 
 
 ### Commit Changes
-### Stage and Commit:
+- Stage and Commit:
 
-```
+```bash
 git add .
 git commit -m "Tested log files"
 git push 
 ```
 
-## Explore Deployments: Add a mydeployment.yaml to base
-```
+## Explore Deployments: 
+- Add mydeployment.yaml to base
+
+```bash
 cat > base/mydeployment.yaml <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -456,13 +458,13 @@ EOF
 ```
 
 **Verify**
-```
+```bash
 cat base/mydeployment.yaml
 ```
 
 
 ## Update base/kustomization.yaml:
-```
+```bash
 cat > base/kustomization.yaml <<EOF
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -473,13 +475,13 @@ EOF
 ```
 
 ### Verify
-```
+```bash
 cat base/kustomization.yaml
 ```
 
 
 ### Update under spec.template.spec.containers:
-```
+```bash
 containers:
 - name: mycontainer
   image: nginx:1.21
@@ -488,7 +490,7 @@ containers:
 ### overlays/prod/patch.yaml
 
 **Add**
-```
+```bash
         resources:
           limits:
             cpu: "0.5"
@@ -501,7 +503,7 @@ EOF
 
 
 ### Run
-```
+```bash
 kubectl apply -k overlays/prod
 kubectl get pods --show-labels
 kubectl logs mypod -f --since=35m --tail=500
@@ -514,27 +516,27 @@ kubectl describe pod mydeployment-76f675b7b6-88lnl
 #### Check mydeployment Image:
 
 - Ensure the Deployment uses the intended version (1.21 to match mypod)
-```
+```bash
 kubectl edit -f base/mydeployment.yaml
 ```
 ![](./img/9b.edit.deploymt.png)
 
 
 **Reapply:**
-```
+```bash
 kubectl apply -k overlays/prod
 ```
 
 ### Monitor Logs:
 Continue monitoring mypod and mydeployment:
-```
+```bash
 kubectl logs mypod -f --since=1h --tail=500
 kubectl logs mydeployment-76f675b7b6-88lnl -f --since=35m --tail=500
 ```
 
 
 **Run**
-```
+```bash
 kubectl delete pod mypod
 kubectl get pods --show-labels
 ```
@@ -543,7 +545,7 @@ kubectl get pods --show-labels
 
 ### Stop and Delete Minikube:
 
-```
+```bash
 minikube stop 
 minikube delete
 ```
@@ -551,6 +553,13 @@ minikube delete
 ![](./img/5b.mini.delete.png)
 
 
+### Push to Github
+
+```bash
+git add .
+git commit -m "update file"
+git push
+``` 
 
 
 ## Conclusion
